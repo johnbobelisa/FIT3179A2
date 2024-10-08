@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Education Expenditure and Socio-Economic Factors in Australia</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.22.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.13.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    #dashboard {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #charts {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      width: 100%;
+    }
+    .chart {
+      width: 45%;
+    }
+    #controls {
+      margin: 20px 0;
+    }
+    #slider-container, #dropdown-container {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Education Expenditure and Socio-Economic Factors in Australia</h1>
+  <div id="dashboard">
+    <div id="controls">
+      <div id="slider-container">
+        <label for="year-slider">Select Year: </label>
+        <input type="range" id="year-slider" min="2018" max="2022" step="1" value="2020">
+        <span id="year-value">2020</span>
+      </div>
+      <div id="dropdown-container">
+        <label for="factor-dropdown">Select Factor to Analyze: </label>
+        <select id="factor-dropdown">
+          <option value="GDP">GDP</option>
+          <option value="CrimeRate">Crime Rate</option>
+          <option value="LiteracyRate">Literacy Rate</option>
+          <option value="PovertyRate">Poverty Rate</option>
+        </select>
+      </div>
+    </div>
+    <div id="map" class="chart"></div>
+    <div id="charts">
+      <div id="line-chart" class="chart"></div>
+    </div>
+  </div>
+
+  <script>
+    // Expanded Synthetic Data with multiple years per state
+    const data = [
+      // New South Wales data
+      {"State": "New South Wales", "Year": 2018, "EducationExpenditure": 500, "GDP": 60000, "CrimeRate": 5.2, "LiteracyRate": 97.5, "PovertyRate": 10.5},
+      {"State": "New South Wales", "Year": 2019, "EducationExpenditure": 520, "GDP": 61000, "CrimeRate": 5.0, "LiteracyRate": 98.0, "PovertyRate": 10.0},
+      {"State": "New South Wales", "Year": 2020, "EducationExpenditure": 540, "GDP": 62000, "CrimeRate": 4.8, "LiteracyRate": 98.5, "PovertyRate": 9.5},
+      {"State": "New South Wales", "Year": 2021, "EducationExpenditure": 560, "GDP": 63000, "CrimeRate": 4.6, "LiteracyRate": 99.0, "PovertyRate": 9.0},
+      {"State": "New South Wales", "Year": 2022, "EducationExpenditure": 580, "GDP": 64000, "CrimeRate": 4.4, "LiteracyRate": 99.5, "PovertyRate": 8.5},
+      // Victoria data
+      {"State": "Victoria", "Year": 2018, "EducationExpenditure": 480, "GDP": 55000, "CrimeRate": 6.2, "LiteracyRate": 96.5, "PovertyRate": 11.5},
+      {"State": "Victoria", "Year": 2019, "EducationExpenditure": 500, "GDP": 56000, "CrimeRate": 6.0, "LiteracyRate": 97.0, "PovertyRate": 11.0},
+      {"State": "Victoria", "Year": 2020, "EducationExpenditure": 520, "GDP": 57000, "CrimeRate": 5.8, "LiteracyRate": 97.5, "PovertyRate": 10.5},
+      {"State": "Victoria", "Year": 2021, "EducationExpenditure": 540, "GDP": 58000, "CrimeRate": 5.6, "LiteracyRate": 98.0, "PovertyRate": 10.0},
+      {"State": "Victoria", "Year": 2022, "EducationExpenditure": 560, "GDP": 59000, "CrimeRate": 5.4, "LiteracyRate": 98.5, "PovertyRate": 9.5},
+      // Add data for other states similarly
+      // For brevity, I'll include only two states here
+    ];
+
+    // Function to update the visualizations
+    function updateVisualizations(selectedYear, selectedFactor) {
+      document.getElementById('year-value').innerText = selectedYear;
+
+      // Filter data for the selected year
+      const filteredData = data.filter(d => d.Year === selectedYear);
+
+      // Vega-Lite Specification for the Map
+      const mapSpec = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "width": 500,
+        "height": 400,
+        "projection": {
+          "type": "conicEqualArea",
+          "center": [134, -25],
+          "scale": 900
+        },
+        "layer": [
+          {
+            "data": {"sphere": true},
+            "mark": {"type": "geoshape", "fill": "#a0c4ff"}
+          },
+          {
+            "data": {"graticule": {"step": [10, 10]}},
+            "mark": {"type": "geoshape", "stroke": "lightgrey", "strokeWidth": 0.5}
+          },
+          {
+            "data": {
+              "url": "https://raw.githubusercontent.com/johnbobelisa/FIT3179-A2/main/ne_50m_admin_1_states_provinces.json",
+              "format": {
+                "type": "topojson",
+                "feature": "ne_50m_admin_1_states_provinces"
+              }
+            },
+            "transform": [
+              {"filter": "datum.properties.admin == 'Australia'"},
+              {
+                "lookup": "properties.name",
+                "from": {
+                  "data": {"values": filteredData},
+                  "key": "State",
+                  "fields": ["EducationExpenditure"]
+                }
+              }
+            ],
+            "mark": {"type": "geoshape", "stroke": "white", "strokeWidth": 1},
+            "encoding": {
+              "color": {
+                "field": "EducationExpenditure",
+                "type": "quantitative",
+                "title": "Education Expenditure",
+                "scale": {"scheme": "Blues"}
+              },
+              "tooltip": [
+                {"field": "properties.name", "type": "nominal", "title": "State"},
+                {"field": "EducationExpenditure", "type": "quantitative"},
+                {"field": "Year", "type": "ordinal"}
+              ]
+            }
+          }
+        ]
+      };
+
+      // Vega-Lite Specification for the Line Chart
+      const lineChartSpec = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "description": "Line chart of selected socio-economic factor over years",
+        "width": 500,
+        "height": 300,
+        "data": {"values": data},
+        "mark": "line",
+        "encoding": {
+          "x": {"field": "Year", "type": "ordinal"},
+          "y": {
+            "field": selectedFactor,
+            "type": "quantitative",
+            "title": selectedFactor.replace(/([A-Z])/g, ' $1').trim()
+          },
+          "color": {"field": "State", "type": "nominal"},
+          "tooltip": [
+            {"field": "State", "type": "nominal"},
+            {"field": selectedFactor, "type": "quantitative"},
+            {"field": "Year", "type": "ordinal"}
+          ]
+        }
+      };
+
+      // Embed the Map
+      vegaEmbed('#map', mapSpec, {"actions": false}).catch(console.error);
+
+      // Embed the Line Chart
+      vegaEmbed('#line-chart', lineChartSpec, {"actions": false}).catch(console.error);
+    }
+
+    // Initial Visualization
+    const initialYear = 2020;
+    const initialFactor = 'GDP';
+    updateVisualizations(initialYear, initialFactor);
+
+    // Event Listener for the Slider
+    document.getElementById('year-slider').addEventListener('input', function() {
+      const selectedYear = +this.value;
+      const selectedFactor = document.getElementById('factor-dropdown').value;
+      updateVisualizations(selectedYear, selectedFactor);
+    });
+
+    // Event Listener for the Dropdown
+    document.getElementById('factor-dropdown').addEventListener('change', function() {
+      const selectedFactor = this.value;
+      const selectedYear = +document.getElementById('year-slider').value;
+      updateVisualizations(selectedYear, selectedFactor);
+    });
+  </script>
+</body>
+</html>
