@@ -1,28 +1,42 @@
 import pandas as pd
-import glob
 
-# Specify the path where your CSV files are stored (adjust the path accordingly)
-path = "C:/Users/Asus/OneDrive/Documents/S2-2024/FIT3179/FIT3179 A2/FIT3179A2/data/*.csv"
+# Load each CSV file
+gdp = pd.read_csv('GDP.csv')
+gini = pd.read_csv('Gini_Index.csv')
+literacy = pd.read_csv('Literacy_Rate.csv')
+employment = pd.read_csv('Employment_Rate.csv')
+education_expenditure = pd.read_csv('Education_Expenditure.csv')
 
-# Use glob to get a list of all CSV files
-csv_files = glob.glob(path)
+# Remove empty rows
+gdp.dropna(subset=['values'], inplace=True)
+gini.dropna(subset=['values'], inplace=True)
+literacy.dropna(subset=['values'], inplace=True)
+employment.dropna(subset=['values'], inplace=True)
+education_expenditure.dropna(subset=['values'], inplace=True)
 
-# List to store the dataframes
-df_list = []
+# Rename 'values' column to the indicator name
+gdp.rename(columns={'values': 'GDP'}, inplace=True)
+gini.rename(columns={'values': 'Gini Index'}, inplace=True)
+literacy.rename(columns={'values': 'Literacy Rate'}, inplace=True)
+employment.rename(columns={'values': 'Employment Rate'}, inplace=True)
+education_expenditure.rename(columns={'values': 'Education Expenditure'}, inplace=True)
 
-# Loop over the files and read them into dataframes
-for file in csv_files:
-    df = pd.read_csv(file)
-    df_list.append(df)
+# **Drop 'Indicator Name' and 'Indicator Code' columns**
+columns_to_drop = ['Indicator Name', 'Indicator Code']
+gdp.drop(columns=columns_to_drop, inplace=True)
+gini.drop(columns=columns_to_drop, inplace=True)
+literacy.drop(columns=columns_to_drop, inplace=True)
+employment.drop(columns=columns_to_drop, inplace=True)
+education_expenditure.drop(columns=columns_to_drop, inplace=True)
 
-# Concatenate all the dataframes into one
-combined_df = pd.concat(df_list, ignore_index=True)
+# Merge dataframes
+data = education_expenditure.merge(gdp, on=['Country Name', 'Country Code'], how='inner')
+data = data.merge(gini, on=['Country Name', 'Country Code'], how='inner')
+data = data.merge(literacy, on=['Country Name', 'Country Code'], how='inner')
+data = data.merge(employment, on=['Country Name', 'Country Code'], how='inner')
 
-# Replace null (NaN) values in the 'values' column with 0
-combined_df['values'] = combined_df['values'].fillna(0)
+# Remove any remaining missing values
+data.dropna(inplace=True)
 
-# Save the combined dataframe to a new CSV file
-combined_df.to_csv("combined_data.csv", index=False)
-
-# Display the first few rows of the combined dataframe to ensure it's correct
-print(combined_df.head())
+# Save the preprocessed data
+data.to_csv('preprocessed_data.csv', index=False)
