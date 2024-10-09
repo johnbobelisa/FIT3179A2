@@ -1,107 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Education Expenditure Effect</title>
-  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correlation: Gov. Expenditure on Education and Other Indicators</title>
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
 </head>
 <body>
-
-<h1>Education Expenditure vs Selected Factor</h1>
-
-<div id="chart"></div>
-
-<script type="text/javascript">
-  const spec = {
-    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "data": {
-      "url": "https://raw.githubusercontent.com/johnbobelisa/FIT3179A2/refs/heads/main/data/cleaned/Synthetic_Australian_State_Data.csv"
-    },
-    "params": [
-      {
-        "name": "stateFilter",
-        "value": "New South Wales",
-        "bind": {
-          "input": "select",
-          "options": [
-            "New South Wales", 
-            "Victoria",
-            "Queensland",
-            "South Australia",
-            "Western Australia",
-            "Tasmania",
-            "Northern Territory",
-            "Australian Capital Territory"
-          ],
-          "labels": [
-            "New South Wales", 
-            "Victoria",
-            "Queensland",
-            "South Australia",
-            "Western Australia",
-            "Tasmania",
-            "Northern Territory",
-            "Australian Capital Territory"
-          ],
-          "name": "Select a State: "
+    <h2>Correlation: Government Expenditure on Education vs Other Indicators</h2>
+    
+    <!-- Dropdown to select different indicators -->
+    <label for="indicator">Choose an indicator to compare:</label>
+    <select id="indicator" onchange="updateChart()">
+        <option value="SL.EMP.TOTL.SP.ZS">Employment to population ratio, 15+, total (%)</option>
+        <option value="NY.GDP.MKTP.CD">GDP (current US$)</option>
+        <option value="SI.POV.GINI">Gini index</option>
+        <option value="SE.ADT.LITR.ZS">Literacy rate, adult total (%)</option>
+    </select>
+    
+    <div id="chart"></div>
+    
+    <script type="text/javascript">
+        // Function to update the chart based on the selected indicator
+        function updateChart() {
+            const selectedIndicator = document.getElementById("indicator").value;
+            
+            const spec = {
+                "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                "description": "Correlation between Government Expenditure on Education and Various Indicators",
+                "data": {
+                    "url": "https://raw.githubusercontent.com/johnbobelisa/FIT3179A2/refs/heads/main/data/combined_data.csv",
+                    "format": {
+                        "type": "csv"
+                    }
+                },
+                "transform": [
+                    {
+                        "filter": "datum['SE.XPD.TOTL.GB.ZS'] != null && datum[selectedIndicator] != null"
+                    },
+                    {
+                        "filter": {
+                            "or": [
+                                {"field": "Indicator Code", "equal": "SE.XPD.TOTL.GB.ZS"}, // Gov. expenditure on education
+                                {"field": "Indicator Code", "equal": selectedIndicator} // Selected indicator
+                            ]
+                        }
+                    },
+                    {
+                        "pivot": "Indicator Code",
+                        "value": "2021",
+                        "groupby": ["Country Name"]
+                    }
+                ],
+                "layer": [
+                    {
+                        "mark": "point",
+                        "encoding": {
+                            "x": {
+                                "field": selectedIndicator,
+                                "type": "quantitative",
+                                "title": {"signal": "datum['Indicator Name']"},
+                                "axis": {"labelAngle": 0}
+                            },
+                            "y": {
+                                "field": "SE.XPD.TOTL.GB.ZS",
+                                "type": "quantitative",
+                                "title": "Government Expenditure on Education (% of Gov. Expenditure)"
+                            },
+                            "tooltip": [
+                                {"field": "Country Name", "type": "nominal"},
+                                {"field": "SE.XPD.TOTL.GB.ZS", "type": "quantitative", "title": "Gov. Expenditure on Education (%)"},
+                                {"field": selectedIndicator, "type": "quantitative"}
+                            ]
+                        }
+                    },
+                    {
+                        "mark": {"type": "line", "color": "red"},
+                        "transform": [{"regression": selectedIndicator, "on": "SE.XPD.TOTL.GB.ZS"}],
+                        "encoding": {
+                            "x": {
+                                "field": selectedIndicator,
+                                "type": "quantitative"
+                            },
+                            "y": {
+                                "field": "SE.XPD.TOTL.GB.ZS",
+                                "type": "quantitative"
+                            }
+                        }
+                    }
+                ]
+            };
+            
+            // Embed the chart with the selected indicator
+            vegaEmbed("#chart", spec).catch(console.error);
         }
-      },
-      {
-        "name": "factorFilter",
-        "value": "GSP (Million AUD)",
-        "bind": {
-          "input": "select",
-          "options": [
-            "GSP (Million AUD)",
-            "Crime Rate (per 100,000)",
-            "Literacy Rate (%)",
-            "Poverty Rate (%)"
-          ],
-          "labels": [
-            "GSP (Million AUD)",
-            "Crime Rate (per 100,000)",
-            "Literacy Rate (%)",
-            "Poverty Rate (%)"
-          ],
-          "name": "Select a Factor: "
-        }
-      }
-    ],
-    "transform": [
-      {
-        "filter": {"param": "stateFilter", "field": "State", "equal": "New South Wales"}
-      },
-      {
-        "calculate": "datum[factorFilter]", 
-        "as": "Selected_Factor"
-      }
-    ],
-    "mark": "point",
-    "encoding": {
-      "x": {
-        "field": "Education Expenditure (Million AUD)",
-        "type": "quantitative",
-        "axis": {"title": "Education Expenditure (Million AUD)"}
-      },
-      "y": {
-        "field": "Selected_Factor",
-        "type": "quantitative",
-        "axis": {"title": {"expr": "factorFilter"}}
-      },
-      "tooltip": [
-        {"field": "Year", "type": "ordinal"},
-        {"field": "State", "type": "nominal"},
-        {"field": "Education Expenditure (Million AUD)", "type": "quantitative"},
-        {"field": "Selected_Factor", "type": "quantitative", "title": {"expr": "factorFilter"}}
-      ]
-    }
-  };
 
-  vegaEmbed('#chart', spec);
-</script>
-
+        // Initial load with default indicator
+        updateChart();
+    </script>
 </body>
 </html>

@@ -18,6 +18,9 @@ for file in csv_files:
 # Concatenate all the dataframes into one
 combined_df = pd.concat(df_list, ignore_index=True)
 
+# Replace null (NaN) values in the 'values' column with 0
+combined_df['values'] = combined_df['values'].fillna(0)
+
 # Save the combined dataframe to a new CSV file
 combined_df.to_csv("combined_data.csv", index=False)
 
