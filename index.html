@@ -25,6 +25,14 @@
   <script type="text/javascript">
     // Function to create the Vega-Lite specification
     function createVegaSpec(selectedFactor) {
+      // Set the x-axis limit if the selected factor is GDP
+      let xAxisScale = {};
+      if (selectedFactor === 'GDP') {
+        xAxisScale = {
+          "domain": [0, 30000000000000]  // Set the GDP axis limit to 30 trillion
+        };
+      }
+
       return {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         "description": "Scatter plot of Education Expenditure vs " + selectedFactor,
@@ -39,7 +47,8 @@
               "x": {
                 "field": selectedFactor,
                 "type": "quantitative",
-                "title": selectedFactor
+                "title": selectedFactor,
+                "scale": xAxisScale  // Apply the scale if set
               },
               "y": {
                 "field": "Education Expenditure",
@@ -66,8 +75,15 @@
               }
             ],
             "encoding": {
-              "x": {"field": selectedFactor, "type": "quantitative"},
-              "y": {"field": "Education Expenditure", "type": "quantitative"}
+              "x": {
+                "field": selectedFactor,
+                "type": "quantitative",
+                "scale": xAxisScale  // Apply the scale here as well
+              },
+              "y": {
+                "field": "Education Expenditure",
+                "type": "quantitative"
+              }
             }
           },
           {
@@ -92,7 +108,8 @@
               "x": {
                 "aggregate": "max",
                 "field": selectedFactor,
-                "type": "quantitative"
+                "type": "quantitative",
+                "scale": xAxisScale  // Apply the scale if necessary
               },
               "y": {
                 "aggregate": {"argmax": selectedFactor},

@@ -31,7 +31,6 @@ def preprocess_file(file_path):
 files = [
     'education_expenditure.csv',
     'Employment_to_population_ratio.csv',
-    'GDP.csv',
     'Literacy_Rate.csv'
 ]
 
