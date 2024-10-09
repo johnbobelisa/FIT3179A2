@@ -15,9 +15,8 @@
   <label for="factor-select">Select a factor to compare with Education Expenditure:</label>
   <select id="factor-select">
     <option value="GDP">GDP</option>
-    <option value="Gini Index">Gini Index</option>
-    <option value="Literacy Rate">Literacy Rate</option>
     <option value="Employment Rate">Employment Rate</option>
+    <option value="Literacy Rate">Literacy Rate</option>
   </select>
   
   <!-- Div to hold the Vega-Lite visualization -->
@@ -30,7 +29,8 @@
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         "description": "Scatter plot of Education Expenditure vs " + selectedFactor,
         "data": {
-          "url": "https://raw.githubusercontent.com/johnbobelisa/FIT3179A2/refs/heads/main/data/preprocessed_data.csv"
+          "url": "https://raw.githubusercontent.com/johnbobelisa/FIT3179A2/refs/heads/main/data/raw/combined_preprocessed_data.csv",
+          "format": {"type": "csv"}
         },
         "layer": [
           {
@@ -44,7 +44,7 @@
               "y": {
                 "field": "Education Expenditure",
                 "type": "quantitative",
-                "title": "Education Expenditure (%)"
+                "title": "Education Expenditure"
               },
               "tooltip": [
                 {"field": "Country Name", "type": "nominal"},
